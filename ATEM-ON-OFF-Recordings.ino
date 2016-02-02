@@ -4,13 +4,12 @@
 
 #include <Ethernet.h>
 #include <SPI.h>
-//#include <Streaming.h>
 
 #include <ATEMbase.h>
 #include <ATEMstd.h>
 ATEMstd AtemSwitcher;
 
-//#include <MemoryFree.h>
+#include <MemoryFree.h>
 
 // DEBUG Switch.
 #define DEBUG // Debug Setting
@@ -23,7 +22,7 @@ int button = 2;
 bool SW_status = false;
 
 // Initialize the Ethernet client library
-//EthernetClient client;
+EthernetClient client;
 
 // MAC address and IP address for this *particular* Arduino / Ethernet Shield!
 // The MAC address is printed on a label on the shield or on the back of your device
@@ -132,8 +131,4 @@ void printIPAddress()
     Serial.print(Ethernet.localIP()[thisByte], DEC);
     Serial.print(F("."));
   }
-}
-
-void checkLED() {
-
 }
