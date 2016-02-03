@@ -11,6 +11,8 @@ ATEMstd AtemSwitcher;
 
 #include <MemoryFree.h>
 
+#include <MsTimer2.h>
+
 // DEBUG Switch.
 #define DEBUG // Debug Setting
 //#define MEM_DEBUG // Debug Setting
@@ -58,19 +60,24 @@ void setup() {
   // On Recording LED
   pinMode(offLED, OUTPUT);
   // Button
-  pinMode(2, INPUT);
+  pinMode(button, INPUT_PULLUP);
 
   // Initialize a connection to the switcher:
   AtemSwitcher.begin(switcherIp, 56417);
+#ifdef DEBUG
   AtemSwitcher.serialOutput(0x80);  // Remove or comment out this line for production code. Serial output may decrease performance!
+#endif
   AtemSwitcher.connect();
+
+  MsTimer2::set(250, checkLED);  // 500ms毎にcheckLED( )割込み関数を呼び出す様に設定
+  MsTimer2::start();             // タイマー割り込み開始
 }
 
 void loop() {
   while (!AtemSwitcher.hasInitialized())  {
-    digitalWrite(onLED, LOW);
-    digitalWrite(offLED, LOW);
-    AtemSwitcher.runLoop();
+    digitalWrite(onLED, HIGH);
+    digitalWrite(offLED, HIGH);
+    AtemSwitcher.runLoop(20);
   }
 
   if (digitalRead(button) == HIGH) {
@@ -79,24 +86,13 @@ void loop() {
     onRecording();
   }
 
-#ifdef DEBUG
-  // Serial.println(AtemSwitcher.getDownstreamKeyerStatus(2));
-#endif
-
-  if (AtemSwitcher.getDownstreamKeyerStatus(2) == 1 )  { // System OFF Recording
-    digitalWrite(onLED, LOW);
-    digitalWrite(offLED, HIGH);
-  } else {
-    digitalWrite(onLED, HIGH);
-    digitalWrite(offLED, LOW);
-  }
 #ifdef MEM_DEBUG
   Serial.print(F("freeMem="));
   Serial.println(freeMemory());
   delay(200);
 #endif
-  AtemSwitcher.delay(150);
-  delay(150);
+  AtemSwitcher.runLoop(200);
+  delay(200);
 }
 
 void offRecording() {
@@ -130,5 +126,15 @@ void printIPAddress()
     // print the value of each byte of the IP address:
     Serial.print(Ethernet.localIP()[thisByte], DEC);
     Serial.print(F("."));
+  }
+}
+void checkLED()
+{
+  if (AtemSwitcher.getDownstreamKeyerStatus(2) == 1 )  { // System OFF Recording
+    digitalWrite(onLED, LOW);
+    digitalWrite(offLED, HIGH);
+  } else {
+    digitalWrite(onLED, HIGH);
+    digitalWrite(offLED, LOW);
   }
 }
